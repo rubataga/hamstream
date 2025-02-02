@@ -2,4 +2,4 @@ OBS:
   host: 'localhost'
   port: 4455
   source_name: 'VideoPlayer'
-  switch_interval: 20
+  switch_interval: 5

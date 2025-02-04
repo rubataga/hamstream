@@ -1,2 +1,6 @@
 *.mp4
-.env
+__pycache__/
+.DS_Store
+/.vscode
+program_schedule.yaml
+config.yaml

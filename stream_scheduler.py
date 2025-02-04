@@ -1,11 +1,12 @@
 import json
-import os
-from dotenv import load_dotenv
-from stream_controls import obs_controls
+import yaml
+import stream_controller
+import time
+# from program_tools import program_schedule_builder
 
-load_dotenv()
+CONFIG = yaml.safe_load(open('config.yaml'))
 
-OBS_PASSWORD = os.getenv("OBS_PASSWORD")
+remote = stream_controller.StreamController(CONFIG)
 
 def load_json(file_name):
     """Load JSON file with error handling"""
@@ -16,23 +17,38 @@ def load_json(file_name):
         print(f"[ERROR] Failed to load {file_name}: {e}")
         exit(1)
 
+def load_yaml(file_name):
+    """Load YAML file with error handling"""
+    try:
+        with open(file_name) as f:
+            return yaml.safe_load(f)
+    except Exception as e:
+        print(f"[ERROR] Failed to load {file_name}: {e}")
+        return None
+
 if __name__ == "__main__":
     print("=== OBS Video Switcher ===")
     
     # Load environment and schedule
-    schedule = load_json("./schedule.json")
+    
+    schedule = load_yaml("program_schedules/program_schedule.yaml")
     
     # Extract video paths from schedule
-    video_paths = [item["video_path"] for item in schedule]
+    # video_paths = [item["video_path"] for item in schedule]
     # print(f"[DEBUG] Loaded video paths: {video_paths}")
     
     # Connect to OBS
-    obs_connection = obs_controls.connect_obs(OBS_PASSWORD)
+    remote.connect_obs()
     
     try:
-        obs_controls.main_loop(obs_connection, video_paths)
+        for item in schedule:
+            video_path = item['path']
+            video_length = item['length']
+            remote.switch_video(video_path)
+            time.sleep(video_length)  # Wait for the duration of the video
     except KeyboardInterrupt:
         print("\n[STATUS] User stopped the switcher")
     finally:
-        obs_connection.disconnect()
-        print("[STATUS] Disconnected from OBS")
+        if remote.obs:
+            remote.obs.disconnect()
+            print("[STATUS] Disconnected from OBS")

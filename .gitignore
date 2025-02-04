@@ -2,5 +2,8 @@
 __pycache__/
 .DS_Store
 /.vscode
+.venv
 program_schedule.yaml
 config.yaml
+**/__pycache__
+**/*.pyc

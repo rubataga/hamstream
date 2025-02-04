@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import time
 from datetime import datetime
 
-
 class StreamController:
     def __init__(self, config):
         self.config = config['OBS']

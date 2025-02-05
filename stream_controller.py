@@ -1,58 +1,54 @@
 from obswebsocket import obsws, requests
-from dotenv import load_dotenv
 import time
 from datetime import datetime
+from rich import print
 
 class StreamController:
     def __init__(self, config):
         self.config = config['OBS']
         self.obs = None
+        self.skip = False
+        # self.console = Console()
 
     def connect_obs(self):
         """Establish connection to OBS WebSocket with error handling"""
-        print("[DEBUG] Attempting OBS connection...")
         try:
             self.obs = obsws(self.config['host'], self.config['port'], self.config['server_password'])
             self.obs.connect()
-            print(f"[SUCCESS] Connected to OBS at {self.config['host']}:{self.config['port']}")
+            print(f"[bold green][SUCCESS] Connected to OBS at {self.config['host']}:{self.config['port']}[/bold green]")
         except Exception as e:
-            print(f"[ERROR] Connection failed: {e}")
+            print(f"[bold red][ERROR] Connection failed: {e}[/bold red]")
             print("Check: 1) OBS is running 2) WebSocket enabled 3) Correct password/port")
             exit(1)
 
-    def switch_video(self, video_path):
+    def switch_video(self, video):
         """Switch the video source with error handling"""
+        video_path = video['path']
         try:
-            print(f"[ACTION] Switching to {video_path} at {datetime.now().strftime('%H:%M:%S')}")
+            print(f"Switched to [bold purple]{video['title']}[/bold purple] at {datetime.now().strftime('%H:%M:%S')}")
             self.obs.call(requests.SetInputSettings(
                 inputName=self.config["source_name"],
                 inputSettings={"local_file": video_path}
             ))
         except Exception as e:
-            print(f"[ERROR] Failed to switch video: {e}")
+            print(f"[bold red][ERROR] Failed to switch video: {e}[/bold red]")
 
-    def main_loop(self,video_paths):
+    def main_loop(self, queue):
         """Main switching logic with visual feedback"""
-        SWITCH_INTERVAL = self.config['switch_interval']
         print("\n[STATUS] Starting video switcher")
-        print(f"Cycle: {SWITCH_INTERVAL}s | Videos: {video_paths}\n")
-        
-        current_index = 0
-        while True:
-            # Get next video path
-            video_path = video_paths[current_index]
+
+        for index, video in enumerate(queue):
+            self.switch_video(video)
             
-            # Perform the switch
-            self.switch_video(video_path)
+            if index == len(queue) - 1:
+                task_description = "Ending stream in..."
+            else:
+                task_description = f"Switching to [bold purple]{queue[(index + 1) % len(queue)]['title']}[/bold purple] in..."
+            print(f"{task_description} {video['length']}s")
             
-            # Update index for next iteration
-            current_index = (current_index + 1) % len(video_paths)
-            
-            # Wait for interval
-            print(f"[SLEEP] Waiting {SWITCH_INTERVAL}s...\n")
-            time.sleep(SWITCH_INTERVAL)
+            time.sleep(video['length'])
 
     def disconnect(self):
         """Sever OBS connection"""
         self.obs.disconnect()
-        print("[DEBUG] Disconnected from OBS")
+        print("[bold red][STATUS] Disconnected from OBS[/bold red]")

@@ -7,8 +7,7 @@ class StreamController:
     def __init__(self, config):
         self.config = config['OBS']
         self.obs = None
-        self.skip = False
-        # self.console = Console()
+        self.current_index = 0
 
     def connect_obs(self):
         """Establish connection to OBS WebSocket with error handling"""
@@ -21,34 +20,45 @@ class StreamController:
             print("Check: 1) OBS is running 2) WebSocket enabled 3) Correct password/port")
             exit(1)
 
-    def switch_video(self, video):
-        """Switch the video source with error handling"""
-        video_path = video['path']
+    def switch_tile(self, tile):
+        """Switch the tile source with error handling"""
+        tile_path = tile.path
         try:
-            print(f"Switched to [bold purple]{video['title']}[/bold purple] at {datetime.now().strftime('%H:%M:%S')}")
+            print(f"Switched to [bold purple]{tile.title}[/bold purple] at {datetime.now().strftime('%H:%M:%S')}")
             self.obs.call(requests.SetInputSettings(
                 inputName=self.config["source_name"],
-                inputSettings={"local_file": video_path}
+                inputSettings={"local_file": tile_path}
             ))
         except Exception as e:
-            print(f"[bold red][ERROR] Failed to switch video: {e}[/bold red]")
+            print(f"[bold red][ERROR] Failed to switch tile: {e}[/bold red]")
 
     def main_loop(self, queue):
-        """Main switching logic with visual feedback"""
-        print("\n[STATUS] Starting video switcher")
+        """Main switching logic with user input"""
+        print("\n[STATUS] Starting tile switcher")
 
-        for index, video in enumerate(queue):
-            self.switch_video(video)
+        while self.current_index < len(queue):
+            tile, duration = queue[self.current_index]
+            self.switch_tile(tile)
             
-            if index == len(queue) - 1:
-                task_description = "Ending stream in..."
-            else:
-                task_description = f"Switching to [bold purple]{queue[(index + 1) % len(queue)]['title']}[/bold purple] in..."
-            print(f"{task_description} {video['length']}s")
-            
-            time.sleep(video['length'])
+            for _ in range(int(duration)):
+                command = input("Enter command (skip/back/exit): ").strip().lower()
+                if command == "skip":
+                    break
+                elif command == "back":
+                    self.current_index = max(0, self.current_index - 1)
+                    break
+                elif command == "exit":
+                    self.disconnect()
+                    return
+                time.sleep(1)
+
+            if command != "back":
+                self.current_index += 1
+
+        print("[bold red][STATUS] Stream ended[/bold red]")
 
     def disconnect(self):
         """Sever OBS connection"""
-        self.obs.disconnect()
-        print("[bold red][STATUS] Disconnected from OBS[/bold red]")
+        if self.obs:
+            self.obs.disconnect()
+            print("[bold red][STATUS] Disconnected from OBS[/bold red]")

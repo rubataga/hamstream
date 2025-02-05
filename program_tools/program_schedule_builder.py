@@ -3,33 +3,32 @@ from program_tools.video_processor import get_video_length
 from utils.file_utils import load_json, save_yaml
 
 def build_default_program_schedule():
-    videos_to_program = load_json("./schedule.json")
-    video_paths = [item["video_path"] for item in videos_to_program]
-    print(f"[DEBUG] Loaded video paths: {video_paths}")
-    build_program_schedule(video_paths)
+    tiles_to_program = load_json("./schedule.json")
+    tile_paths = [tile["video_path"] for tile in tiles_to_program]
+    print(f"[DEBUG] Loaded tile paths: {tile_paths}")
+    build_program_schedule(tile_paths)
 
-def build_program_schedule(video_paths, output_file='./program schedules/program_schedule.yaml'):
-    """Build a program schedule from a list of video paths and save it to a YAML file."""
+def build_program_schedule(tile_paths, output_file='./schedules/program_schedule.yaml'):
+    """Build a program schedule from a list of tile paths and save it to a YAML file."""
     schedule = []
     
-    for video_path in video_paths:
-        if not os.path.exists(video_path):
-            print(f"[ERROR] Video file does not exist: {video_path}")
+    for tile_path in tile_paths:
+        tile_title = os.path.basename(tile_path)
+        tile_initializer_path = f"./schedules/tile_initializers/{tile_title}.yaml"
+        
+        if not os.path.exists(tile_initializer_path):
+            print(f"[ERROR] Tile initializer file does not exist: {tile_initializer_path}")
             continue
         
-        video_length = get_video_length(video_path)
+        video_length = get_video_length(tile_path)
         if video_length is None:
-            print(f"[ERROR] Could not get length for video: {video_path}")
+            print(f"[ERROR] Could not get length for tile: {tile_path}")
             continue
         
-        video_title = os.path.basename(video_path)
         schedule.append({
-            'title': video_title,
-            'path': video_path,
-            'length': video_length,
+            'tile_path': tile_initializer_path,
+            'duration': video_length
         })
-    
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
     save_yaml(schedule, output_file)
     

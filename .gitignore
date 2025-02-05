@@ -7,3 +7,4 @@ program_schedule.yaml
 config.yaml
 **/__pycache__
 **/*.pyc
+*.yaml

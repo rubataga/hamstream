@@ -7,7 +7,7 @@ class StreamController:
     def __init__(self, config):
         self.config = config['OBS']
         self.obs = None
-        self.current_index = 0
+        self.queue = []
 
     def connect_obs(self):
         """Establish connection to OBS WebSocket with error handling"""
@@ -15,6 +15,7 @@ class StreamController:
             self.obs = obsws(self.config['host'], self.config['port'], self.config['server_password'])
             self.obs.connect()
             print(f"[bold green][SUCCESS] Connected to OBS at {self.config['host']}:{self.config['port']}[/bold green]")
+            # self.register_events(self.obs)
         except Exception as e:
             print(f"[bold red][ERROR] Connection failed: {e}[/bold red]")
             print("Check: 1) OBS is running 2) WebSocket enabled 3) Correct password/port")
@@ -22,6 +23,7 @@ class StreamController:
 
     def switch_tile(self, tile):
         """Switch the tile source with error handling"""
+        print(f"Attempting to switch to [bold purple]{tile.title}[/bold purple]")
         tile_path = tile.path
         try:
             print(f"Switched to [bold purple]{tile.title}[/bold purple] at {datetime.now().strftime('%H:%M:%S')}")
@@ -33,37 +35,16 @@ class StreamController:
                 inputName=self.config["source_name"],
                 mediaAction="OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART"
             ))
-            # self.obs.call(requests.SetMediaInputCursor(
-            #     inputName=self.config["source_name"],
-            #     mediaCursor=0
-            # ))
         except Exception as e:
             print(f"[bold red][ERROR] Failed to switch tile: {e}[/bold red]")
 
     def main_loop(self, queue):
-        """Main switching logic with user input"""
-        print("\n[STATUS] Starting tile switcher")
-
-        while self.current_index < len(queue):
-            tile, duration = queue[self.current_index]
+        self.queue = queue
+        print("[STATUS] Starting tile switcher")
+        for tile, duration in self.queue:
             self.switch_tile(tile)
-            
-            for _ in range(int(duration)):
-                command = input("Enter command (skip/back/exit): ").strip().lower()
-                if command == "skip":
-                    break
-                elif command == "back":
-                    self.current_index = max(0, self.current_index - 1)
-                    break
-                elif command == "exit":
-                    self.disconnect()
-                    return
-                time.sleep(1)
-
-            if command != "back":
-                self.current_index += 1
-
-        print("[bold red][STATUS] Stream ended[/bold red]")
+            time.sleep(duration)
+        print("[bold yellow]Finished processing the queue.[/bold yellow]")
 
     def disconnect(self):
         """Sever OBS connection"""

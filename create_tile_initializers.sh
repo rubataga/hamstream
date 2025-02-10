@@ -1,4 +1,5 @@
 #!/bin/bash
+# ./create_tile_initializers.sh
 
 # Activate the virtual environment
 source .venv/bin/activate

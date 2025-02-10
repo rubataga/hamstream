@@ -26,6 +26,7 @@ if __name__ == "__main__":
         queue.append((program_tile, duration))
         print(f"{len(queue)}. {program_tile.title} ({duration}s)")
 
+    remote.queue = queue
     # Connect to OBS
     remote.connect_obs()
     

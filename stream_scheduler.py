@@ -1,7 +1,7 @@
 import stream_controller
 from utils.file_utils import load_yaml
 from program_tiles.program_tile import ProgramTile
-from program_tiles.video_tile import VideoTile  # Ensure VideoTile is imported to register it
+import program_tiles  # Ensure all tile classes are discovered and registered
 from rich import print
 
 CONFIG = load_yaml('config.yaml')
@@ -21,6 +21,7 @@ if __name__ == "__main__":
     for entry in schedule:
         tile_path = entry['tile_path']
         duration = entry['duration']
+        # Dynamically create the tile from the YAML file
         program_tile = ProgramTile.from_yaml(tile_path)
         queue.append((program_tile, duration))
         print(f"{len(queue)}. {program_tile.title} ({duration}s)")

@@ -29,6 +29,10 @@ class StreamController:
                 inputName=self.config["source_name"],
                 inputSettings={"local_file": tile_path}
             ))
+            self.obs.call(requests.SetMediaInputCursor(
+                inputName=self.config["source_name"],
+                mediaCursor=0
+            ))
         except Exception as e:
             print(f"[bold red][ERROR] Failed to switch tile: {e}[/bold red]")
 

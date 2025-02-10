@@ -1,4 +1,4 @@
-from program_tiles.program_tile import ProgramTile
+from program_tiles.program_tile import ProgramTile, ProgramTileFactory
 
 class VideoTile(ProgramTile):
     def __init__(self, title, path):
@@ -7,5 +7,5 @@ class VideoTile(ProgramTile):
     def get_type(self):
         return "video"
 
-# Register the VideoTile class with the ProgramTile base class
-ProgramTile.register_tile_class(VideoTile)
+# Register the VideoTile class with the ProgramTileFactory
+ProgramTileFactory.register_tile_class(VideoTile)
